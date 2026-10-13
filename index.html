@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work & Task Tracker Dashboard</title>
+  <!-- Tailwind CSS CDN untuk Tampilan Modern & Clean -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF & AutoTable (PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+  <!-- Header / Navbar -->
+  <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-list-check text-2xl text-amber-300"></i>
+        <h1 class="text-xl font-bold tracking-wide">Work Monitoring & Task Tracker</h1>
+      </div>
+      <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2 text-sm">
+        <i class="fa-solid fa-plus"></i> Tambah Task
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Filter & Export Controls -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex flex-wrap gap-3 items-center">
+        <div>
+          <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Bulan & Tahun</label>
+          <input type="month" id="filterMonth" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Status</label>
+          <select id="filterStatus" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="ALL">Semua Status</option>
+            <option value="Not Yet">Not Yet</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Hold">Hold</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <div class="self-end">
+          <button onclick="resetFilters()" class="text-xs text-indigo-600 hover:underline py-2 px-1">Reset Filter</button>
+        </div>
+      </div>
+
+      <!-- Export Buttons -->
+      <div class="flex gap-2 self-end">
+        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-excel"></i> Export Excel
+        </button>
+        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+        <p class="text-xs font-medium text-slate-500">Total Pekerjaan</p>
+        <h3 id="statTotal" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <p class="text-xs font-medium text-slate-500">Done</p>
+        <h3 id="statDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+        <p class="text-xs font-medium text-slate-500">In Progress</p>
+        <h3 id="statInProgress" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+        <p class="text-xs font-medium text-slate-500">Hold</p>
+        <h3 id="statHold" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
+        <p class="text-xs font-medium text-slate-500">Not Yet / Pending</p>
+        <h3 id="statNotYet" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
+      </div>
+    </div>
+
+    <!-- Task Table -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+        <h2 class="font-bold text-slate-800 text-lg">Daftar Pekerjaan & SLA Status</h2>
+        <span id="recordCount" class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Record</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-3.5">Nama Task / Pekerjaan</th>
+              <th class="px-6 py-3.5">Kategori</th>
+              <th class="px-6 py-3.5">Mulai</th>
+              <th class="px-6 py-3.5">Target SLA</th>
+              <th class="px-6 py-3.5">Status SLA</th>
+              <th class="px-6 py-3.5">Status Job</th>
+              <th class="px-6 py-3.5 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="taskTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Form Add/Edit -->
+  <div id="taskModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+      <h3 id="modalTitle" class="text-xl font-bold text-slate-800 mb-4">Tambah Pekerjaan Baru</h3>
+      
+      <form id="taskForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <input type="hidden" id="taskId">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Pekerjaan / Project *</label>
+          <input type="text" id="taskTitle" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Misal: Recruiter SLA Tracker Project">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
+            <select id="taskCategory" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="Recruitment">Recruitment</option>
+              <option value="HR Operations">HR Operations</option>
+              <option value="Training/OD">Training / OD</option>
+              <option value="Reporting">Reporting & Analytics</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai *</label>
+            <input type="date" id="startDate" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Pilihan SLA (Hari Working)</label>
+            <select id="slaDays" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="1">1 Hari (Sangat Cepat)</option>
+              <option value="3" selected>3 Hari (Standar)</option>
+              <option value="7">7 Hari (1 Minggu)</option>
+              <option value="14">14 Hari (2 Minggu)</option>
+              <option value="30">30 Hari (1 Bulan)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Pekerjaan</label>
+            <select id="taskStatus" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="Not Yet">Not Yet</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Hold">Hold</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan / Detail Tambahan</label>
+          <textarea id="taskNotes" rows="3" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Tambahkan catatan progress atau kendala jika ada..."></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow">Simpan Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application JavaScript -->
+  <script>
+    // State Data
+    let tasks = JSON.parse(localStorage.getItem('tasks_db')) || [];
+
+    // Initialize Default Dates
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('startDate').valueAsDate = new Date();
+      renderApp();
+    });
+
+    // Save tasks to local storage
+    function saveTasks() {
+      localStorage.setItem('tasks_db', JSON.stringify(tasks));
+      renderApp();
+    }
+
+    // Modal Control
+    function openModal(editId = null) {
+      const modal = document.getElementById('taskModal');
+      const form = document.getElementById('taskForm');
+      modal.classList.remove('hidden');
+
+      if (editId) {
+        const t = tasks.find(item => item.id === editId);
+        document.getElementById('modalTitle').innerText = 'Edit Pekerjaan';
+        document.getElementById('taskId').value = t.id;
+        document.getElementById('taskTitle').value = t.title;
+        document.getElementById('taskCategory').value = t.category;
+        document.getElementById('startDate').value = t.startDate;
+        document.getElementById('slaDays').value = t.slaDays;
+        document.getElementById('taskStatus').value = t.status;
+        document.getElementById('taskNotes').value = t.notes || '';
+      } else {
+        document.getElementById('modalTitle').innerText = 'Tambah Pekerjaan Baru';
+        form.reset();
+        document.getElementById('taskId').value = '';
+        document.getElementById('startDate').valueAsDate = new Date();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('taskModal').classList.add('hidden');
+    }
+
+    // Submit Handler
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('taskId').value;
+      const title = document.getElementById('taskTitle').value;
+      const category = document.getElementById('taskCategory').value;
+      const startDate = document.getElementById('startDate').value;
+      const slaDays = parseInt(document.getElementById('slaDays').value);
+      const status = document.getElementById('taskStatus').value;
+      const notes = document.getElementById('taskNotes').value;
+
+      if (id) {
+        // Edit existing
+        const index = tasks.findIndex(t => t.id === id);
+        tasks[index] = { ...tasks[index], title, category, startDate, slaDays, status, notes };
+      } else {
+        // Add new
+        const newTask = {
+          id: 'TSK-' + Date.now(),
+          title,
+          category,
+          startDate,
+          slaDays,
+          status,
+          notes,
+          createdMonth: startDate.substring(0, 7) // YYYY-MM format
+        };
+        tasks.push(newTask);
+      }
+
+      saveTasks();
+      closeModal();
+    }
+
+    // Delete Task
+    function deleteTask(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus pekerjaan ini?')) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+      }
+    }
+
+    // Calculate SLA Status
+    function getSLAInfo(startDateStr, slaDays, status) {
+      const start = new Date(startDateStr);
+      const targetDate = new Date(start);
+      targetDate.setDate(targetDate.getDate() + slaDays);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffTime = targetDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (status === 'Done') {
+        return { label: 'Met SLA', color: 'bg-emerald-100 text-emerald-800' };
+      }
+
+      if (diffDays < 0) {
+        return { label: `Overdue (${Math.abs(diffDays)} hr)`, color: 'bg-rose-100 text-rose-800 font-semibold' };
+      } else if (diffDays <= 1) {
+        return { label: `Hampir SLA (${diffDays} hr)`, color: 'bg-amber-100 text-amber-800' };
+      } else {
+        return { label: `On Track (${diffDays} hr)`, color: 'bg-blue-100 text-blue-800' };
+      }
+    }
+
+    // Render Function
+    function renderApp() {
+      const filterMonthVal = document.getElementById('filterMonth').value;
+      const filterStatusVal = document.getElementById('filterStatus').value;
+      const tableBody = document.getElementById('taskTableBody');
+
+      // Filter Logic
+      let filtered = tasks.filter(t => {
+        const matchMonth = !filterMonthVal || t.startDate.startsWith(filterMonthVal);
+        const matchStatus = filterStatusVal === 'ALL' || t.status === filterStatusVal;
+        return matchMonth && matchStatus;
+      });
+
+      // Update Dashboard Counters
+      document.getElementById('statTotal').innerText = filtered.length;
+      document.getElementById('statDone').innerText = filtered.filter(t => t.status === 'Done').length;
+      document.getElementById('statInProgress').innerText = filtered.filter(t => t.status === 'In Progress').length;
+      document.getElementById('statHold').innerText = filtered.filter(t => t.status === 'Hold').length;
+      document.getElementById('statNotYet').innerText = filtered.filter(t => t.status === 'Not Yet').length;
+      document.getElementById('recordCount').innerText = `${filtered.length} Record`;
+
+      // Render Table Rows
+      tableBody.innerHTML = '';
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Tidak ada data pekerjaan yang ditemukan.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(t => {
+        const sla = getSLAInfo(t.startDate, t.slaDays, t.status);
+
+        let statusBadge = '';
+        switch(t.status) {
+          case 'Done': statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">Done</span>'; break;
+          case 'In Progress': statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">In Progress</span>'; break;
+          case 'Hold': statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">Hold</span>'; break;
+          default: statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-700 font-medium">Not Yet</span>';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+        tr.innerHTML = `
+          <td class="px-6 py-4 font-medium text-slate-800">
+            ${t.title}
+            ${t.notes ? `<p class="text-xs text-slate-400 font-normal mt-0.5">${t.notes}</p>` : ''}
+          </td>
+          <td class="px-6 py-4 text-xs text-slate-500">${t.category}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-xs">${t.startDate}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-xs">${t.slaDays} Hari</td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2.5 py-1 text-xs rounded-full ${sla.color}">${sla.label}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+          <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+            <button onclick="openModal('${t.id}')" class="text-indigo-600 hover:text-indigo-900"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="deleteTask('${t.id}')" class="text-rose-600 hover:text-rose-900"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById('filterMonth').value = '';
+      document.getElementById('filterStatus').value = 'ALL';
+      renderApp();
+    }
+
+    // Export to Excel
+    function exportToExcel() {
+      if (tasks.length === 0) return alert('Tidak ada data untuk diexport!');
+      
+      const exportData = tasks.map((t, index) => ({
+        'No': index + 1,
+        'Nama Pekerjaan': t.title,
+        'Kategori': t.category,
+        'Tanggal Mulai': t.startDate,
+        'Target SLA (Hari)': t.slaDays,
+        'Status Pekerjaan': t.status,
+        'Catatan': t.notes || '-'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Work_Report");
+      XLSX.writeFile(wb, `Work_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // Export to PDF
+    function exportToPDF() {
+      if (tasks.length === 0) return alert('Tidak ada data untuk diexport!');
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.text("Laporan Rekapitulasi Pekerjaan & SLA", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+
+      const tableRows = tasks.map((t, idx) => [
+        idx + 1,
+        t.title,
+        t.category,
+        t.startDate,
+        `${t.slaDays} Hari`,
+        t.status
+      ]);
+
+      doc.autoTable({
+        head: [['No', 'Pekerjaan', 'Kategori', 'Tgl Mulai', 'SLA', 'Status']],
+        body: tableRows,
+        startY: 28,
+        theme: 'grid',
+        headStyles: { fillColor: [67, 56, 202] }
+      });
+
+      doc.save(`Work_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+  </script>
+</body>
+</html>
