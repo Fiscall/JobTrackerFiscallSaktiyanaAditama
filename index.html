@@ -18,140 +18,196 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-  <!-- Header / Navbar -->
+  <!-- Header / Navbar dengan Tab Navigasi -->
   <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap gap-3 justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <i class="fa-solid fa-list-check text-2xl text-amber-300"></i>
-        <h1 class="text-xl font-bold tracking-wide">Work Monitoring & Task Tracker</h1>
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-4 justify-between items-center">
+      <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-3">
+          <i class="fa-solid fa-list-check text-2xl text-amber-300"></i>
+          <h1 class="text-lg font-bold tracking-wide hidden sm:block">Work Tracker</h1>
+        </div>
+        
+        <!-- Menu Navigation Tabs -->
+        <nav class="flex space-x-1 bg-indigo-800/60 p-1 rounded-xl">
+          <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+          </button>
+          <button id="tabBtnTasks" onclick="switchTab('tasks')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50">
+            <i class="fa-solid fa-table-list"></i> Data Task
+          </button>
+        </nav>
       </div>
+
       <div class="flex items-center gap-2">
         <!-- Backup & Restore Buttons -->
         <button onclick="backupJSON()" class="bg-indigo-800 hover:bg-indigo-900 text-indigo-100 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 border border-indigo-500/30" title="Download backup data JSON">
-          <i class="fa-solid fa-download"></i> Backup JSON
+          <i class="fa-solid fa-download"></i> <span class="hidden md:inline">Backup</span>
         </button>
         <button onclick="document.getElementById('importFileInput').click()" class="bg-indigo-800 hover:bg-indigo-900 text-indigo-100 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 border border-indigo-500/30" title="Restore data dari file JSON">
-          <i class="fa-solid fa-upload"></i> Restore JSON
+          <i class="fa-solid fa-upload"></i> <span class="hidden md:inline">Restore</span>
         </button>
         <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="restoreJSON(event)">
 
-        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold px-4 py-2 rounded-lg shadow transition flex items-center gap-2 text-sm ml-2">
+        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-2 text-xs ml-1">
           <i class="fa-solid fa-plus"></i> Tambah Task
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <main class="max-w-7xl mx-auto px-4 py-6">
 
-    <!-- Filter & Export Controls -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center justify-between">
-      <div class="flex flex-wrap gap-3 items-center">
+    <!-- SECTION 1: DASHBOARD MENU (Tampilan Awal / Default) -->
+    <div id="viewDashboard" class="space-y-6">
+      
+      <!-- Dashboard Title Header -->
+      <div class="flex justify-between items-center">
         <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Bulan & Tahun</label>
-          <input type="month" id="filterMonth" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <h2 class="text-xl font-bold text-slate-800">Executive Summary & Analytics</h2>
+          <p class="text-xs text-slate-500">Ringkasan performa dan pemantauan SLA seluruh pekerjaan.</p>
         </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Status</label>
-          <select id="filterStatus" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="ALL">Semua Status</option>
-            <option value="Not Yet">Not Yet</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Hold">Hold</option>
-            <option value="Done">Done</option>
-          </select>
-        </div>
-        <div class="self-end">
-          <button onclick="resetFilters()" class="text-xs text-indigo-600 hover:underline py-2 px-1">Reset Filter</button>
-        </div>
-      </div>
-
-      <!-- Export Buttons -->
-      <div class="flex gap-2 self-end">
-        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
-          <i class="fa-solid fa-file-excel"></i> Export Excel
-        </button>
-        <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
-          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        <button onclick="switchTab('tasks')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+          Kelola Data Task <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
-    </div>
 
-    <!-- Dashboard Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
-        <p class="text-xs font-medium text-slate-500">Total Pekerjaan</p>
-        <h3 id="statTotal" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
-        <p class="text-xs font-medium text-slate-500">Done</p>
-        <h3 id="statDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
-        <p class="text-xs font-medium text-slate-500">In Progress</p>
-        <h3 id="statInProgress" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
-        <p class="text-xs font-medium text-slate-500">Hold</p>
-        <h3 id="statHold" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
-        <p class="text-xs font-medium text-slate-500">Not Yet / Pending</p>
-        <h3 id="statNotYet" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
-      </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <!-- Status Distribution Doughnut Chart -->
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Pekerjaan
-        </h3>
-        <div class="relative h-64 w-full flex justify-center items-center">
-          <canvas id="statusChart"></canvas>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+          <p class="text-xs font-medium text-slate-500">Total Pekerjaan</p>
+          <h3 id="dashStatTotal" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+          <p class="text-xs font-medium text-slate-500">Done</p>
+          <h3 id="dashStatDone" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+          <p class="text-xs font-medium text-slate-500">In Progress</p>
+          <h3 id="dashStatInProgress" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+          <p class="text-xs font-medium text-slate-500">Hold</p>
+          <h3 id="dashStatHold" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
+          <p class="text-xs font-medium text-slate-500">Not Yet / Pending</p>
+          <h3 id="dashStatNotYet" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
         </div>
       </div>
 
-      <!-- Monthly Trend Bar Chart -->
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume Pekerjaan per Bulan
-        </h3>
-        <div class="relative h-64 w-full flex justify-center items-center">
-          <canvas id="trendChart"></canvas>
+      <!-- Visual Charts Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Pekerjaan
+          </h3>
+          <div class="relative h-64 w-full flex justify-center items-center">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume Pekerjaan per Bulan
+          </h3>
+          <div class="relative h-64 w-full flex justify-center items-center">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Preview Table (Active & Recent Tasks) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 text-sm">Pekerjaan Terbaru / Aktif</h3>
+          <button onclick="switchTab('tasks')" class="text-xs text-indigo-600 hover:underline">Lihat Semua Data Task →</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="px-6 py-3">Pekerjaan</th>
+                <th class="px-6 py-3">Kategori</th>
+                <th class="px-6 py-3">Mulai</th>
+                <th class="px-6 py-3">SLA Status</th>
+                <th class="px-6 py-3">Status Job</th>
+              </tr>
+            </thead>
+            <tbody id="dashTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- Task Table -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-        <h2 class="font-bold text-slate-800 text-lg">Daftar Pekerjaan & SLA Status</h2>
-        <span id="recordCount" class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Record</span>
+
+    <!-- SECTION 2: DATA TASK MENU (Isian, Input, Filter & Action) -->
+    <div id="viewTasks" class="hidden space-y-6">
+      
+      <!-- Filter & Export Bar -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex flex-wrap gap-3 items-center">
+          <div>
+            <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Bulan & Tahun</label>
+            <input type="month" id="filterMonth" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-500 block mb-1">Filter Status</label>
+            <select id="filterStatus" onchange="renderApp()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="ALL">Semua Status</option>
+              <option value="Not Yet">Not Yet</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Hold">Hold</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+          <div class="self-end">
+            <button onclick="resetFilters()" class="text-xs text-indigo-600 hover:underline py-2 px-1">Reset Filter</button>
+          </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="flex gap-2 self-end">
+          <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-file-excel"></i> Export Excel
+          </button>
+          <button onclick="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+          </button>
+        </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600">
-          <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
-            <tr>
-              <th class="px-6 py-3.5">Nama Task / Pekerjaan</th>
-              <th class="px-6 py-3.5">Kategori</th>
-              <th class="px-6 py-3.5">Mulai</th>
-              <th class="px-6 py-3.5">Target SLA</th>
-              <th class="px-6 py-3.5">Status SLA</th>
-              <th class="px-6 py-3.5">Status Job</th>
-              <th class="px-6 py-3.5 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="taskTableBody" class="divide-y divide-slate-100">
-            <!-- Dynamic rows will be inserted here -->
-          </tbody>
-        </table>
+
+      <!-- Task Table Full -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <h2 class="font-bold text-slate-800 text-lg">Kelola Data Pekerjaan & SLA</h2>
+          <span id="recordCount" class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Record</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="px-6 py-3.5">Nama Task / Pekerjaan</th>
+                <th class="px-6 py-3.5">Kategori</th>
+                <th class="px-6 py-3.5">Mulai</th>
+                <th class="px-6 py-3.5">Target SLA</th>
+                <th class="px-6 py-3.5">Status SLA</th>
+                <th class="px-6 py-3.5">Status Job</th>
+                <th class="px-6 py-3.5 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
   </main>
 
-  <!-- Modal Form Add/Edit -->
+  <!-- Modal Form Add/Edit Pekerjaan -->
   <div id="taskModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
       <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -219,12 +275,35 @@
     </div>
   </div>
 
-  <!-- Application JavaScript -->
+  <!-- JavaScript Application -->
   <script>
-    // State Data
+    // Global State
     let tasks = JSON.parse(localStorage.getItem('tasks_db')) || [];
+    let activeTab = 'dashboard';
     let statusChartInstance = null;
     let trendChartInstance = null;
+
+    // Switch Navigation Tabs
+    function switchTab(tabName) {
+      activeTab = tabName;
+      const viewDash = document.getElementById('viewDashboard');
+      const viewTasks = document.getElementById('viewTasks');
+      const btnDash = document.getElementById('tabBtnDashboard');
+      const btnTasks = document.getElementById('tabBtnTasks');
+
+      if (tabName === 'dashboard') {
+        viewDash.classList.remove('hidden');
+        viewTasks.classList.add('hidden');
+        btnDash.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
+        btnTasks.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
+      } else {
+        viewDash.classList.add('hidden');
+        viewTasks.classList.remove('hidden');
+        btnTasks.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
+        btnDash.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
+      }
+      renderApp();
+    }
 
     // Close Dropdown on Outside Click
     document.addEventListener('click', (e) => {
@@ -233,19 +312,19 @@
       }
     });
 
-    // Initialize Default Dates
+    // Initialize Page
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('startDate').valueAsDate = new Date();
       renderApp();
     });
 
-    // Save tasks to local storage
+    // Save Data & Refresh
     function saveTasks() {
       localStorage.setItem('tasks_db', JSON.stringify(tasks));
       renderApp();
     }
 
-    // Toggle Dropdown Menu
+    // Toggle Dropdown Action Menu
     function toggleDropdown(event, id) {
       event.stopPropagation();
       document.querySelectorAll('.dropdown-menu').forEach(menu => {
@@ -255,7 +334,7 @@
       if (currentMenu) currentMenu.classList.toggle('hidden');
     }
 
-    // Modal Control
+    // Modal Form Control
     function openModal(editId = null) {
       const modal = document.getElementById('taskModal');
       const form = document.getElementById('taskForm');
@@ -283,7 +362,7 @@
       document.getElementById('taskModal').classList.add('hidden');
     }
 
-    // Submit Handler
+    // Submit Task Handler
     function handleFormSubmit(e) {
       e.preventDefault();
       const id = document.getElementById('taskId').value;
@@ -295,11 +374,11 @@
       const notes = document.getElementById('taskNotes').value;
 
       if (id) {
-        // Edit existing
+        // Edit existing task
         const index = tasks.findIndex(t => t.id === id);
         tasks[index] = { ...tasks[index], title, category, startDate, slaDays, status, notes };
       } else {
-        // Add new
+        // Create new task
         const newTask = {
           id: 'TSK-' + Date.now(),
           title,
@@ -308,13 +387,16 @@
           slaDays,
           status,
           notes,
-          createdMonth: startDate.substring(0, 7) // YYYY-MM format
+          createdMonth: startDate.substring(0, 7)
         };
         tasks.push(newTask);
       }
 
       saveTasks();
       closeModal();
+      
+      // Beralih otomatis ke tab Data Task jika sedang menambah/mengedit task
+      switchTab('tasks');
     }
 
     // Delete Task
@@ -350,14 +432,14 @@
       }
     }
 
-    // Update Charts Visualizations
-    function updateCharts(filteredTasks) {
-      // 1. Doughnut Chart Data (Status Distribution)
-      const countDone = filteredTasks.filter(t => t.status === 'Done').length;
-      const countInProgress = filteredTasks.filter(t => t.status === 'In Progress').length;
-      const countHold = filteredTasks.filter(t => t.status === 'Hold').length;
-      const countNotYet = filteredTasks.filter(t => t.status === 'Not Yet').length;
+    // Render Charts Visualization
+    function updateCharts() {
+      const countDone = tasks.filter(t => t.status === 'Done').length;
+      const countInProgress = tasks.filter(t => t.status === 'In Progress').length;
+      const countHold = tasks.filter(t => t.status === 'Hold').length;
+      const countNotYet = tasks.filter(t => t.status === 'Not Yet').length;
 
+      // 1. Status Doughnut Chart
       const statusCtx = document.getElementById('statusChart').getContext('2d');
       if (statusChartInstance) statusChartInstance.destroy();
 
@@ -375,13 +457,11 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-          }
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
         }
       });
 
-      // 2. Bar Chart Data (Monthly Trend)
+      // 2. Monthly Trend Bar Chart
       const monthlyGroup = {};
       tasks.forEach(t => {
         const monthKey = t.startDate ? t.startDate.substring(0, 7) : 'Unknown';
@@ -408,44 +488,63 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          },
-          plugins: {
-            legend: { display: false }
-          }
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+          plugins: { legend: { display: false } }
         }
       });
     }
 
-    // Render Function
+    // Main App Render
     function renderApp() {
+      // Update Dashboard Counters
+      document.getElementById('dashStatTotal').innerText = tasks.length;
+      document.getElementById('dashStatDone').innerText = tasks.filter(t => t.status === 'Done').length;
+      document.getElementById('dashStatInProgress').innerText = tasks.filter(t => t.status === 'In Progress').length;
+      document.getElementById('dashStatHold').innerText = tasks.filter(t => t.status === 'Hold').length;
+      document.getElementById('dashStatNotYet').innerText = tasks.filter(t => t.status === 'Not Yet').length;
+
+      // Update Charts
+      updateCharts();
+
+      // Render Dashboard Preview Table
+      const dashTableBody = document.getElementById('dashTableBody');
+      dashTableBody.innerHTML = '';
+      const recentTasks = [...tasks].reverse().slice(0, 5); // Take 5 latest tasks
+
+      if (recentTasks.length === 0) {
+        dashTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada data pekerjaan tersimpan.</td></tr>`;
+      } else {
+        recentTasks.forEach(t => {
+          const sla = getSLAInfo(t.startDate, t.slaDays, t.status);
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+          tr.innerHTML = `
+            <td class="px-6 py-3 font-medium text-slate-800">${t.title}</td>
+            <td class="px-6 py-3 text-xs text-slate-500">${t.category}</td>
+            <td class="px-6 py-3 text-xs">${t.startDate}</td>
+            <td class="px-6 py-3"><span class="px-2 py-0.5 text-xs rounded-full ${sla.color}">${sla.label}</span></td>
+            <td class="px-6 py-3"><span class="px-2 py-0.5 text-xs rounded-full bg-slate-100 font-medium">${t.status}</span></td>
+          `;
+          dashTableBody.appendChild(tr);
+        });
+      }
+
+      // Render Tasks Page Table with Filters
       const filterMonthVal = document.getElementById('filterMonth').value;
       const filterStatusVal = document.getElementById('filterStatus').value;
-      const tableBody = document.getElementById('taskTableBody');
+      const taskTableBody = document.getElementById('taskTableBody');
 
-      // Filter Logic
       let filtered = tasks.filter(t => {
         const matchMonth = !filterMonthVal || t.startDate.startsWith(filterMonthVal);
         const matchStatus = filterStatusVal === 'ALL' || t.status === filterStatusVal;
         return matchMonth && matchStatus;
       });
 
-      // Update Dashboard Counters
-      document.getElementById('statTotal').innerText = filtered.length;
-      document.getElementById('statDone').innerText = filtered.filter(t => t.status === 'Done').length;
-      document.getElementById('statInProgress').innerText = filtered.filter(t => t.status === 'In Progress').length;
-      document.getElementById('statHold').innerText = filtered.filter(t => t.status === 'Hold').length;
-      document.getElementById('statNotYet').innerText = filtered.filter(t => t.status === 'Not Yet').length;
       document.getElementById('recordCount').innerText = `${filtered.length} Record`;
+      taskTableBody.innerHTML = '';
 
-      // Update Charts
-      updateCharts(filtered);
-
-      // Render Table Rows
-      tableBody.innerHTML = '';
       if (filtered.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Tidak ada data pekerjaan yang ditemukan.</td></tr>`;
+        taskTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Tidak ada data pekerjaan yang ditemukan.</td></tr>`;
         return;
       }
 
@@ -475,7 +574,6 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
           <td class="px-6 py-4 text-right whitespace-nowrap">
-            <!-- Dropdown Menu Container -->
             <div class="relative inline-block text-left dropdown-action">
               <button onclick="toggleDropdown(event, '${t.id}')" 
                       class="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition focus:outline-none" 
@@ -483,7 +581,6 @@
                 <i class="fa-solid fa-ellipsis-vertical text-base"></i>
               </button>
               
-              <!-- Dropdown Content -->
               <div id="dropdown-${t.id}" 
                    class="dropdown-menu hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-100 z-30 py-1 text-left text-xs">
                 <button onclick="openModal('${t.id}')" 
@@ -499,7 +596,7 @@
             </div>
           </td>
         `;
-        tableBody.appendChild(tr);
+        taskTableBody.appendChild(tr);
       });
     }
 
@@ -562,9 +659,7 @@
 
     // Backup JSON Data
     function backupJSON() {
-      if (tasks.length === 0) {
-        return alert('Tidak ada data pekerjaan untuk dibackup!');
-      }
+      if (tasks.length === 0) return alert('Tidak ada data pekerjaan untuk dibackup!');
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
       const downloadAnchor = document.createElement('a');
@@ -581,19 +676,17 @@
     function restoreJSON(event) {
       const fileReader = new FileReader();
       const file = event.target.files[0];
-
       if (!file) return;
 
       fileReader.onload = function(e) {
         try {
           const importedTasks = JSON.parse(e.target.result);
-          
           if (!Array.isArray(importedTasks)) {
-            alert('Format file JSON tidak valid! File harus berisi array data task.');
+            alert('Format file JSON tidak valid!');
             return;
           }
 
-          if (confirm(`Apakah Anda yakin ingin mengimpor ${importedTasks.length} data pekerjaan? Data saat ini di browser akan digantikan.`)) {
+          if (confirm(`Impor ${importedTasks.length} data pekerjaan? Data di browser akan digantikan.`)) {
             tasks = importedTasks;
             saveTasks();
             alert('Restore data berhasil!');
