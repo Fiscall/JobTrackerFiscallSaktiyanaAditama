@@ -15,6 +15,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .cal-day-header { font-size: 0.7rem; font-weight: 700; text-align: center; padding-bottom: 0.5rem; }
+    .cal-day-cell { height: 2.25rem; width: 2.25rem; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border-radius: 9999px; margin: 0 auto; cursor: default; }
+    .cal-day-cell.today { background-color: #4338ca; color: white; font-weight: bold; }
+    .cal-day-cell.holiday { background-color: #fee2e2; color: #dc2626; font-weight: bold; }
+    .cal-day-cell.sunday { color: #dc2626; font-weight: 600; }
+    .cal-day-cell.other-month { color: #cbd5e1; }
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
@@ -64,7 +72,7 @@
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-xl font-bold text-slate-800">Executive Summary & Analytics</h2>
-          <p class="text-xs text-slate-500">Ringkasan performa dan pemantauan SLA seluruh pekerjaan.</p>
+          <p class="text-xs text-slate-500">Ringkasan performa, grafik tren, dan kalender kerja interaktif.</p>
         </div>
         <button onclick="switchTab('tasks')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
           Kelola Data Task <i class="fa-solid fa-arrow-right"></i>
@@ -95,49 +103,105 @@
         </div>
       </div>
 
-      <!-- Visual Charts Section -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Pekerjaan
-          </h3>
-          <div class="relative h-64 w-full flex justify-center items-center">
-            <canvas id="statusChart"></canvas>
+      <!-- Visual Section: Charts (Kiri) & Interactive Calendar (Kanan) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Kiri (2 Kolom): Charts Visual -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Status Doughnut Chart -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Job
+              </h3>
+              <div class="relative h-56 w-full flex justify-center items-center">
+                <canvas id="statusChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Monthly Trend Bar Chart -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume per Bulan
+              </h3>
+              <div class="relative h-56 w-full flex justify-center items-center">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Preview Table (Recent Tasks) -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 class="font-bold text-slate-800 text-sm">Pekerjaan Terbaru / Aktif</h3>
+              <button onclick="switchTab('tasks')" class="text-xs text-indigo-600 hover:underline">Lihat Semua Data Task →</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th class="px-6 py-3">Pekerjaan</th>
+                    <th class="px-6 py-3">Kategori</th>
+                    <th class="px-6 py-3">Mulai</th>
+                    <th class="px-6 py-3">SLA Status</th>
+                    <th class="px-6 py-3">Status Job</th>
+                  </tr>
+                </thead>
+                <tbody id="dashTableBody" class="divide-y divide-slate-100">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume Pekerjaan per Bulan
-          </h3>
-          <div class="relative h-64 w-full flex justify-center items-center">
-            <canvas id="trendChart"></canvas>
+        <!-- Kanan (1 Kolom): Widget Kalender Interaktif & Hari Libur -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full justify-between">
+          <div>
+            <!-- Calendar Header & Navigation -->
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-indigo-600"></i> Kalender & Hari Libur
+              </h3>
+              <div class="flex items-center gap-1">
+                <button onclick="prevCalMonth()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition" title="Bulan Sebelumnya">
+                  <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <span id="calMonthTitle" class="text-xs font-bold text-indigo-700 min-w-[100px] text-center">Oktober 2026</span>
+                <button onclick="nextCalMonth()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition" title="Bulan Selanjutnya">
+                  <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Calendar Days Header -->
+            <div class="grid grid-cols-7 text-slate-400 mb-1">
+              <div class="cal-day-header text-rose-500">Min</div>
+              <div class="cal-day-header">Sen</div>
+              <div class="cal-day-header">Sel</div>
+              <div class="cal-day-header">Rab</div>
+              <div class="cal-day-header">Kam</div>
+              <div class="cal-day-header">Jum</div>
+              <div class="cal-day-header">Sab</div>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="calDaysGrid" class="grid grid-cols-7 gap-y-1 mb-4">
+              <!-- Calendar cells rendered by JS -->
+            </div>
+          </div>
+
+          <!-- List Information Hari Libur Bulan Ini -->
+          <div class="border-t border-slate-100 pt-3 mt-2">
+            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <i class="fa-solid fa-circle-info text-amber-500"></i> Tanggal Merah Bulan Ini:
+            </p>
+            <div id="holidayList" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
+              <!-- Holiday items rendered by JS -->
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Summary Preview Table (Active & Recent Tasks) -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 text-sm">Pekerjaan Terbaru / Aktif</h3>
-          <button onclick="switchTab('tasks')" class="text-xs text-indigo-600 hover:underline">Lihat Semua Data Task →</button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-600">
-            <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
-              <tr>
-                <th class="px-6 py-3">Pekerjaan</th>
-                <th class="px-6 py-3">Kategori</th>
-                <th class="px-6 py-3">Mulai</th>
-                <th class="px-6 py-3">SLA Status</th>
-                <th class="px-6 py-3">Status Job</th>
-              </tr>
-            </thead>
-            <tbody id="dashTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic rows -->
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
 
@@ -282,6 +346,64 @@
     let activeTab = 'dashboard';
     let statusChartInstance = null;
     let trendChartInstance = null;
+    let calCurrentDate = new Date();
+
+    // Database Hari Libur Nasional & Cuti Bersama Indonesia (2025-2027)
+    const indonesiaHolidays = {
+      // 2026
+      "2026-01-01": "Tahun Baru Masehi 2026",
+      "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
+      "2026-02-16": "Cuti Bersama Tahun Baru Imlek",
+      "2026-02-17": "Tahun Baru Imlek 2577 Kongzili",
+      "2026-03-18": "Cuti Bersama Nyepi",
+      "2026-03-19": "Hari Suci Nyepi Saka 1948",
+      "2026-03-20": "Cuti Bersama Idulfitri 1447 H",
+      "2026-03-21": "Hari Raya Idulfitri 1447 H",
+      "2026-03-22": "Hari Raya Idulfitri 1447 H",
+      "2026-03-23": "Cuti Bersama Idulfitri 1447 H",
+      "2026-03-24": "Cuti Bersama Idulfitri 1447 H",
+      "2026-04-03": "Wafat Yesus Kristus",
+      "2026-04-05": "Kebangkitan Yesus Kristus (Paskah)",
+      "2026-05-01": "Hari Buruh Internasional",
+      "2026-05-14": "Kenaikan Yesus Kristus",
+      "2026-05-15": "Cuti Bersama Kenaikan Yesus Kristus",
+      "2026-05-27": "Hari Raya Iduladha 1447 H",
+      "2026-05-28": "Cuti Bersama Iduladha",
+      "2026-05-31": "Hari Raya Waisak 2570 BE",
+      "2026-06-01": "Hari Lahir Pancasila",
+      "2026-06-16": "Tahun Baru Islam 1448 H",
+      "2026-08-17": "Hari Kemerdekaan RI",
+      "2026-08-25": "Maulid Nabi Muhammad SAW",
+      "2026-12-24": "Cuti Bersama Natal",
+      "2026-12-25": "Hari Raya Natal",
+
+      // 2027
+      "2027-01-01": "Tahun Baru Masehi 2027",
+      "2027-01-05": "Isra Mikraj Nabi Muhammad SAW",
+      "2027-02-05": "Cuti Bersama Imlek",
+      "2027-02-06": "Tahun Baru Imlek 2578",
+      "2027-03-08": "Hari Suci Nyepi Saka 1949",
+      "2027-03-09": "Cuti Bersama Idulfitri 1448 H",
+      "2027-03-10": "Hari Raya Idulfitri 1448 H",
+      "2027-03-11": "Hari Raya Idulfitri 1448 H",
+      "2027-03-12": "Cuti Bersama Idulfitri 1448 H",
+      "2027-03-15": "Cuti Bersama Idulfitri 1448 H",
+      "2027-03-25": "Cuti Bersama Wafat Yesus Kristus",
+      "2027-03-26": "Wafat Yesus Kristus",
+      "2027-03-28": "Kebangkitan Yesus Kristus (Paskah)",
+      "2027-05-01": "Hari Buruh Internasional",
+      "2027-05-06": "Kenaikan Yesus Kristus",
+      "2027-05-17": "Hari Raya Iduladha 1448 H",
+      "2027-05-18": "Cuti Bersama Iduladha",
+      "2027-05-19": "Cuti Bersama Hari Raya Waisak",
+      "2027-05-20": "Hari Raya Waisak 2571 BE",
+      "2027-06-01": "Hari Lahir Pancasila",
+      "2027-06-06": "Tahun Baru Islam 1449 H",
+      "2027-08-15": "Maulid Nabi Muhammad SAW",
+      "2027-08-17": "Hari Kemerdekaan RI",
+      "2027-12-24": "Cuti Bersama Natal",
+      "2027-12-25": "Hari Raya Natal"
+    };
 
     // Switch Navigation Tabs
     function switchTab(tabName) {
@@ -374,11 +496,9 @@
       const notes = document.getElementById('taskNotes').value;
 
       if (id) {
-        // Edit existing task
         const index = tasks.findIndex(t => t.id === id);
         tasks[index] = { ...tasks[index], title, category, startDate, slaDays, status, notes };
       } else {
-        // Create new task
         const newTask = {
           id: 'TSK-' + Date.now(),
           title,
@@ -394,8 +514,6 @@
 
       saveTasks();
       closeModal();
-      
-      // Beralih otomatis ke tab Data Task jika sedang menambah/mengedit task
       switchTab('tasks');
     }
 
@@ -432,6 +550,88 @@
       }
     }
 
+    // Render Calendar & Holiday Widget
+    function prevCalMonth() {
+      calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
+      renderCalendar();
+    }
+
+    function nextCalMonth() {
+      calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = calCurrentDate.getFullYear();
+      const month = calCurrentDate.getMonth();
+
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+      const grid = document.getElementById('calDaysGrid');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1).getDay(); // 0 = Sun
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      // Empty cells before month start
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'cal-day-cell other-month';
+        grid.appendChild(emptyCell);
+      }
+
+      const activeHolidaysThisMonth = [];
+
+      // Month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayOfWeek = new Date(year, month, day).getDay();
+
+        const cell = document.createElement('div');
+        cell.innerText = day;
+
+        let classes = ['cal-day-cell'];
+
+        const holidayTitle = indonesiaHolidays[dayStr];
+        if (holidayTitle) {
+          classes.push('holiday');
+          cell.title = holidayTitle;
+          activeHolidaysThisMonth.push({ date: day, name: holidayTitle });
+        } else if (dayOfWeek === 0) {
+          classes.push('sunday');
+        }
+
+        if (dayStr === todayStr) {
+          classes.push('today');
+        }
+
+        cell.className = classes.join(' ');
+        grid.appendChild(cell);
+      }
+
+      // Render Holidays Description List
+      const holidayListEl = document.getElementById('holidayList');
+      holidayListEl.innerHTML = '';
+
+      if (activeHolidaysThisMonth.length === 0) {
+        holidayListEl.innerHTML = `<p class="text-slate-400 italic">Tidak ada tanggal merah di bulan ini.</p>`;
+      } else {
+        activeHolidaysThisMonth.forEach(h => {
+          const item = document.createElement('div');
+          item.className = 'flex items-start gap-2 text-slate-700';
+          item.innerHTML = `
+            <span class="bg-rose-100 text-rose-700 font-bold px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap">${h.date} ${monthNames[month].slice(0,3)}</span>
+            <span class="text-[11px] leading-snug">${h.name}</span>
+          `;
+          holidayListEl.appendChild(item);
+        });
+      }
+    }
+
     // Render Charts Visualization
     function updateCharts() {
       const countDone = tasks.filter(t => t.status === 'Done').length;
@@ -439,7 +639,7 @@
       const countHold = tasks.filter(t => t.status === 'Hold').length;
       const countNotYet = tasks.filter(t => t.status === 'Not Yet').length;
 
-      // 1. Status Doughnut Chart
+      // Status Doughnut Chart
       const statusCtx = document.getElementById('statusChart').getContext('2d');
       if (statusChartInstance) statusChartInstance.destroy();
 
@@ -457,11 +657,11 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
         }
       });
 
-      // 2. Monthly Trend Bar Chart
+      // Monthly Trend Bar Chart
       const monthlyGroup = {};
       tasks.forEach(t => {
         const monthKey = t.startDate ? t.startDate.substring(0, 7) : 'Unknown';
@@ -503,13 +703,14 @@
       document.getElementById('dashStatHold').innerText = tasks.filter(t => t.status === 'Hold').length;
       document.getElementById('dashStatNotYet').innerText = tasks.filter(t => t.status === 'Not Yet').length;
 
-      // Update Charts
+      // Update Visuals
       updateCharts();
+      renderCalendar();
 
       // Render Dashboard Preview Table
       const dashTableBody = document.getElementById('dashTableBody');
       dashTableBody.innerHTML = '';
-      const recentTasks = [...tasks].reverse().slice(0, 5); // Take 5 latest tasks
+      const recentTasks = [...tasks].reverse().slice(0, 5);
 
       if (recentTasks.length === 0) {
         dashTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada data pekerjaan tersimpan.</td></tr>`;
