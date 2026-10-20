@@ -11,6 +11,8 @@
   <!-- jsPDF & AutoTable (PDF) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -96,6 +98,29 @@
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
         <p class="text-xs font-medium text-slate-500">Not Yet / Pending</p>
         <h3 id="statNotYet" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Status Distribution Doughnut Chart -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Pekerjaan
+        </h3>
+        <div class="relative h-64 w-full flex justify-center items-center">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Monthly Trend Bar Chart -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume Pekerjaan per Bulan
+        </h3>
+        <div class="relative h-64 w-full flex justify-center items-center">
+          <canvas id="trendChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -198,6 +223,8 @@
   <script>
     // State Data
     let tasks = JSON.parse(localStorage.getItem('tasks_db')) || [];
+    let statusChartInstance = null;
+    let trendChartInstance = null;
 
     // Close Dropdown on Outside Click
     document.addEventListener('click', (e) => {
@@ -323,6 +350,74 @@
       }
     }
 
+    // Update Charts Visualizations
+    function updateCharts(filteredTasks) {
+      // 1. Doughnut Chart Data (Status Distribution)
+      const countDone = filteredTasks.filter(t => t.status === 'Done').length;
+      const countInProgress = filteredTasks.filter(t => t.status === 'In Progress').length;
+      const countHold = filteredTasks.filter(t => t.status === 'Hold').length;
+      const countNotYet = filteredTasks.filter(t => t.status === 'Not Yet').length;
+
+      const statusCtx = document.getElementById('statusChart').getContext('2d');
+      if (statusChartInstance) statusChartInstance.destroy();
+
+      statusChartInstance = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Done', 'In Progress', 'Hold', 'Not Yet'],
+          datasets: [{
+            data: [countDone, countInProgress, countHold, countNotYet],
+            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#f43f5e'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          }
+        }
+      });
+
+      // 2. Bar Chart Data (Monthly Trend)
+      const monthlyGroup = {};
+      tasks.forEach(t => {
+        const monthKey = t.startDate ? t.startDate.substring(0, 7) : 'Unknown';
+        monthlyGroup[monthKey] = (monthlyGroup[monthKey] || 0) + 1;
+      });
+
+      const sortedMonths = Object.keys(monthlyGroup).sort();
+      const monthCounts = sortedMonths.map(m => monthlyGroup[m]);
+
+      const trendCtx = document.getElementById('trendChart').getContext('2d');
+      if (trendChartInstance) trendChartInstance.destroy();
+
+      trendChartInstance = new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+          labels: sortedMonths.length > 0 ? sortedMonths : ['Belum Ada Data'],
+          datasets: [{
+            label: 'Jumlah Pekerjaan',
+            data: monthCounts.length > 0 ? monthCounts : [0],
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
     // Render Function
     function renderApp() {
       const filterMonthVal = document.getElementById('filterMonth').value;
@@ -343,6 +438,9 @@
       document.getElementById('statHold').innerText = filtered.filter(t => t.status === 'Hold').length;
       document.getElementById('statNotYet').innerText = filtered.filter(t => t.status === 'Not Yet').length;
       document.getElementById('recordCount').innerText = `${filtered.length} Record`;
+
+      // Update Charts
+      updateCharts(filtered);
 
       // Render Table Rows
       tableBody.innerHTML = '';
@@ -506,7 +604,6 @@
       };
 
       fileReader.readAsText(file);
-      // Reset input agar file yang sama bisa diunggah ulang jika diperlukan
       event.target.value = '';
     }
   </script>
