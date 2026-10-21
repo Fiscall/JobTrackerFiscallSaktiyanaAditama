@@ -65,7 +65,7 @@
 
   <main class="max-w-7xl mx-auto px-4 py-6">
 
-    <!-- SECTION 1: DASHBOARD MENU (Tampilan Awal / Default) -->
+    <!-- SECTION 1: DASHBOARD MENU -->
     <div id="viewDashboard" class="space-y-6">
       
       <!-- Dashboard Title Header -->
@@ -155,10 +155,9 @@
           </div>
         </div>
 
-        <!-- Kanan (1 Kolom): Widget Kalender Interaktif & Hari Libur -->
+        <!-- Kanan (1 Kolom): Widget Kalender Interaktif -->
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full justify-between">
           <div>
-            <!-- Calendar Header & Navigation -->
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                 <i class="fa-solid fa-calendar-days text-indigo-600"></i> Kalender & Hari Libur
@@ -174,7 +173,6 @@
               </div>
             </div>
 
-            <!-- Calendar Days Header -->
             <div class="grid grid-cols-7 text-slate-400 mb-1">
               <div class="cal-day-header text-rose-500">Min</div>
               <div class="cal-day-header">Sen</div>
@@ -185,19 +183,17 @@
               <div class="cal-day-header">Sab</div>
             </div>
 
-            <!-- Calendar Days Grid -->
             <div id="calDaysGrid" class="grid grid-cols-7 gap-y-1 mb-4">
-              <!-- Calendar cells rendered by JS -->
+              <!-- Calendar cells -->
             </div>
           </div>
 
-          <!-- List Information Hari Libur Bulan Ini -->
           <div class="border-t border-slate-100 pt-3 mt-2">
             <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
               <i class="fa-solid fa-circle-info text-amber-500"></i> Tanggal Merah Bulan Ini:
             </p>
             <div id="holidayList" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
-              <!-- Holiday items rendered by JS -->
+              <!-- Holiday items -->
             </div>
           </div>
         </div>
@@ -206,7 +202,7 @@
     </div>
 
 
-    <!-- SECTION 2: DATA TASK MENU (Isian, Input, Filter & Action) -->
+    <!-- SECTION 2: DATA TASK MENU -->
     <div id="viewTasks" class="hidden space-y-6">
       
       <!-- Filter & Export Bar -->
@@ -252,6 +248,7 @@
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
               <tr>
+                <th class="px-4 py-3.5 text-center w-12">No.</th>
                 <th class="px-6 py-3.5">Nama Task / Pekerjaan</th>
                 <th class="px-6 py-3.5">Kategori</th>
                 <th class="px-6 py-3.5">Mulai</th>
@@ -348,9 +345,8 @@
     let trendChartInstance = null;
     let calCurrentDate = new Date();
 
-    // Database Hari Libur Nasional & Cuti Bersama Indonesia (2025-2027)
+    // Hari Libur Indonesia
     const indonesiaHolidays = {
-      // 2026
       "2026-01-01": "Tahun Baru Masehi 2026",
       "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
       "2026-02-16": "Cuti Bersama Tahun Baru Imlek",
@@ -376,33 +372,7 @@
       "2026-08-25": "Maulid Nabi Muhammad SAW",
       "2026-12-24": "Cuti Bersama Natal",
       "2026-12-25": "Hari Raya Natal",
-
-      // 2027
-      "2027-01-01": "Tahun Baru Masehi 2027",
-      "2027-01-05": "Isra Mikraj Nabi Muhammad SAW",
-      "2027-02-05": "Cuti Bersama Imlek",
-      "2027-02-06": "Tahun Baru Imlek 2578",
-      "2027-03-08": "Hari Suci Nyepi Saka 1949",
-      "2027-03-09": "Cuti Bersama Idulfitri 1448 H",
-      "2027-03-10": "Hari Raya Idulfitri 1448 H",
-      "2027-03-11": "Hari Raya Idulfitri 1448 H",
-      "2027-03-12": "Cuti Bersama Idulfitri 1448 H",
-      "2027-03-15": "Cuti Bersama Idulfitri 1448 H",
-      "2027-03-25": "Cuti Bersama Wafat Yesus Kristus",
-      "2027-03-26": "Wafat Yesus Kristus",
-      "2027-03-28": "Kebangkitan Yesus Kristus (Paskah)",
-      "2027-05-01": "Hari Buruh Internasional",
-      "2027-05-06": "Kenaikan Yesus Kristus",
-      "2027-05-17": "Hari Raya Iduladha 1448 H",
-      "2027-05-18": "Cuti Bersama Iduladha",
-      "2027-05-19": "Cuti Bersama Hari Raya Waisak",
-      "2027-05-20": "Hari Raya Waisak 2571 BE",
-      "2027-06-01": "Hari Lahir Pancasila",
-      "2027-06-06": "Tahun Baru Islam 1449 H",
-      "2027-08-15": "Maulid Nabi Muhammad SAW",
-      "2027-08-17": "Hari Kemerdekaan RI",
-      "2027-12-24": "Cuti Bersama Natal",
-      "2027-12-25": "Hari Raya Natal"
+      "2027-01-01": "Tahun Baru Masehi 2027"
     };
 
     // Switch Navigation Tabs
@@ -550,7 +520,7 @@
       }
     }
 
-    // Render Calendar & Holiday Widget
+    // Render Calendar Widget
     function prevCalMonth() {
       calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
       renderCalendar();
@@ -571,13 +541,12 @@
       const grid = document.getElementById('calDaysGrid');
       grid.innerHTML = '';
 
-      const firstDay = new Date(year, month, 1).getDay(); // 0 = Sun
+      const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-      // Empty cells before month start
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'cal-day-cell other-month';
@@ -586,7 +555,6 @@
 
       const activeHolidaysThisMonth = [];
 
-      // Month days
       for (let day = 1; day <= daysInMonth; day++) {
         const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayOfWeek = new Date(year, month, day).getDay();
@@ -613,7 +581,6 @@
         grid.appendChild(cell);
       }
 
-      // Render Holidays Description List
       const holidayListEl = document.getElementById('holidayList');
       holidayListEl.innerHTML = '';
 
@@ -639,7 +606,6 @@
       const countHold = tasks.filter(t => t.status === 'Hold').length;
       const countNotYet = tasks.filter(t => t.status === 'Not Yet').length;
 
-      // Status Doughnut Chart
       const statusCtx = document.getElementById('statusChart').getContext('2d');
       if (statusChartInstance) statusChartInstance.destroy();
 
@@ -661,7 +627,6 @@
         }
       });
 
-      // Monthly Trend Bar Chart
       const monthlyGroup = {};
       tasks.forEach(t => {
         const monthKey = t.startDate ? t.startDate.substring(0, 7) : 'Unknown';
@@ -703,7 +668,6 @@
       document.getElementById('dashStatHold').innerText = tasks.filter(t => t.status === 'Hold').length;
       document.getElementById('dashStatNotYet').innerText = tasks.filter(t => t.status === 'Not Yet').length;
 
-      // Update Visuals
       updateCharts();
       renderCalendar();
 
@@ -730,7 +694,7 @@
         });
       }
 
-      // Render Tasks Page Table with Filters
+      // Render Tasks Page Table dengan Penomoran (No.)
       const filterMonthVal = document.getElementById('filterMonth').value;
       const filterStatusVal = document.getElementById('filterStatus').value;
       const taskTableBody = document.getElementById('taskTableBody');
@@ -745,11 +709,11 @@
       taskTableBody.innerHTML = '';
 
       if (filtered.length === 0) {
-        taskTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Tidak ada data pekerjaan yang ditemukan.</td></tr>`;
+        taskTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Tidak ada data pekerjaan yang ditemukan.</td></tr>`;
         return;
       }
 
-      filtered.forEach(t => {
+      filtered.forEach((t, index) => {
         const sla = getSLAInfo(t.startDate, t.slaDays, t.status);
 
         let statusBadge = '';
@@ -763,6 +727,7 @@
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
         tr.innerHTML = `
+          <td class="px-4 py-4 text-center font-medium text-slate-400 text-xs">${index + 1}</td>
           <td class="px-6 py-4 font-medium text-slate-800">
             ${t.title}
             ${t.notes ? `<p class="text-xs text-slate-400 font-normal mt-0.5">${t.notes}</p>` : ''}
@@ -827,16 +792,20 @@
       XLSX.writeFile(wb, `Work_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // Export to PDF
+    // Export to PDF dengan Font 1 Ukuran Lebih Kecil
     function exportToPDF() {
       if (tasks.length === 0) return alert('Tidak ada data untuk diexport!');
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
+      // Judul Utama (Dikecilkan dari 14pt ke 12pt)
+      doc.setFontSize(12);
       doc.text("Laporan Rekapitulasi Pekerjaan & SLA", 14, 15);
-      doc.setFontSize(10);
-      doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+      
+      // Subtitle Tanggal
+      doc.setFontSize(9);
+      doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 21);
 
       const tableRows = tasks.map((t, idx) => [
         idx + 1,
@@ -850,9 +819,17 @@
       doc.autoTable({
         head: [['No', 'Pekerjaan', 'Kategori', 'Tgl Mulai', 'SLA', 'Status']],
         body: tableRows,
-        startY: 28,
+        startY: 26,
         theme: 'grid',
-        headStyles: { fillColor: [67, 56, 202] }
+        headStyles: { 
+          fillColor: [67, 56, 202],
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        styles: { 
+          fontSize: 9,
+          cellPadding: 2.5
+        }
       });
 
       doc.save(`Work_Report_${new Date().toISOString().slice(0,10)}.pdf`);
