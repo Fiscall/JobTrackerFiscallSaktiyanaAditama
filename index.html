@@ -37,11 +37,14 @@
         
         <!-- Menu Navigation Tabs -->
         <nav class="flex space-x-1 bg-indigo-800/60 p-1 rounded-xl">
-          <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm">
+          <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm">
             <i class="fa-solid fa-chart-pie"></i> Dashboard
           </button>
-          <button id="tabBtnTasks" onclick="switchTab('tasks')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50">
+          <button id="tabBtnTasks" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50">
             <i class="fa-solid fa-table-list"></i> Data Task
+          </button>
+          <button id="tabBtnMom" onclick="switchTab('mom')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50">
+            <i class="fa-solid fa-note-sticky"></i> Minutes of Meeting (MoM)
           </button>
         </nav>
       </div>
@@ -56,8 +59,8 @@
         </button>
         <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="restoreJSON(event)">
 
-        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-2 text-xs ml-1">
-          <i class="fa-solid fa-plus"></i> Tambah Task
+        <button id="mainAddBtn" onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-2 text-xs ml-1">
+          <i class="fa-solid fa-plus"></i> <span id="mainAddBtnText">Tambah Task</span>
         </button>
       </div>
     </div>
@@ -129,7 +132,7 @@
         <!-- Kiri (2 Kolom): Charts Visual -->
         <div class="lg:col-span-2 space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Chart 1: SLA Performance Chart (Meet SLA vs Overdue) -->
+            <!-- Chart 1: SLA Performance Chart -->
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
               <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5">
                 <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Performa SLA
@@ -297,9 +300,33 @@
       </div>
     </div>
 
+
+    <!-- SECTION 3: MINUTES OF MEETING (MoM) MENU -->
+    <div id="viewMom" class="hidden space-y-6">
+      
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Minutes of Meeting (MoM)</h2>
+          <p class="text-xs text-slate-500">Catatan notulensi diskusi, pilar eksekusi, dan riwayat instruksi terpisah dari task.</p>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="momSearch" onkeyup="renderMomList()" placeholder="Cari notulensi atau peserta..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none w-64">
+          <button onclick="openMomModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3.5 py-2 rounded-lg shadow transition text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> Buat Notulensi Baru
+          </button>
+        </div>
+      </div>
+
+      <!-- MoM Cards Grid -->
+      <div id="momGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamic Cards -->
+      </div>
+
+    </div>
+
   </main>
 
-  <!-- Modal Form Add/Edit Pekerjaan -->
+  <!-- Modal Form Add/Edit Pekerjaan (Task) -->
   <div id="taskModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
       <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
@@ -374,10 +401,58 @@
     </div>
   </div>
 
+
+  <!-- Modal Form Add/Edit MoM -->
+  <div id="momModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeMomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+      <h3 id="momModalTitle" class="text-xl font-bold text-slate-800 mb-4">Catat Minutes of Meeting (MoM)</h3>
+      
+      <form id="momForm" onsubmit="handleMomSubmit(event)" class="space-y-4">
+        <input type="hidden" id="momId">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Judul Meeting / Perihal Diskusi *</label>
+          <input type="text" id="momTitle" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Misal: Alignment SLA Recruitment Tim HR">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Meeting *</label>
+            <input type="date" id="momDate" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Peserta / Attendees</label>
+            <input type="text" id="momAttendees" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Misal: Pak Budi, Tim TA, Saya">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Ringkasan Hasil Diskusi & Notulensi *</label>
+          <textarea id="momSummary" required rows="4" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Tuliskan poin-poin penting hasil diskusi..."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Action Items / Eksekusi Lanjutan</label>
+          <textarea id="momActions" rows="3" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="1. Buat report bulanan&#10;2. Follow up kandidat SPV"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeMomModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow">Simpan MoM</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <!-- JavaScript Application -->
   <script>
     // Global State
     let tasks = JSON.parse(localStorage.getItem('tasks_db')) || [];
+    let momList = JSON.parse(localStorage.getItem('mom_db')) || [];
     let activeTab = 'dashboard';
     let slaChartInstance = null;
     let statusChartInstance = null;
@@ -419,19 +494,38 @@
       activeTab = tabName;
       const viewDash = document.getElementById('viewDashboard');
       const viewTasks = document.getElementById('viewTasks');
+      const viewMom = document.getElementById('viewMom');
+
       const btnDash = document.getElementById('tabBtnDashboard');
       const btnTasks = document.getElementById('tabBtnTasks');
+      const btnMom = document.getElementById('tabBtnMom');
+
+      const mainAddBtnText = document.getElementById('mainAddBtnText');
+      const mainAddBtn = document.getElementById('mainAddBtn');
+
+      viewDash.classList.add('hidden');
+      viewTasks.classList.add('hidden');
+      viewMom.classList.add('hidden');
+
+      btnDash.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
+      btnTasks.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
+      btnMom.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
 
       if (tabName === 'dashboard') {
         viewDash.classList.remove('hidden');
-        viewTasks.classList.add('hidden');
-        btnDash.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
-        btnTasks.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
-      } else {
-        viewDash.classList.add('hidden');
+        btnDash.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
+        mainAddBtnText.innerText = "Tambah Task";
+        mainAddBtn.onclick = () => openModal();
+      } else if (tabName === 'tasks') {
         viewTasks.classList.remove('hidden');
-        btnTasks.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
-        btnDash.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-indigo-100 hover:text-white hover:bg-indigo-600/50";
+        btnTasks.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
+        mainAddBtnText.innerText = "Tambah Task";
+        mainAddBtn.onclick = () => openModal();
+      } else if (tabName === 'mom') {
+        viewMom.classList.remove('hidden');
+        btnMom.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-indigo-700 shadow-sm";
+        mainAddBtnText.innerText = "Buat MoM";
+        mainAddBtn.onclick = () => openMomModal();
       }
       renderApp();
     }
@@ -446,6 +540,7 @@
     // Initialize Page
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('startDate').valueAsDate = new Date();
+      document.getElementById('momDate').valueAsDate = new Date();
       renderApp();
     });
 
@@ -453,6 +548,11 @@
     function saveTasks() {
       localStorage.setItem('tasks_db', JSON.stringify(tasks));
       renderApp();
+    }
+
+    function saveMom() {
+      localStorage.setItem('mom_db', JSON.stringify(momList));
+      renderMomList();
     }
 
     // Toggle Visibility Close Date Input
@@ -474,7 +574,7 @@
       if (currentMenu) currentMenu.classList.toggle('hidden');
     }
 
-    // Modal Form Control
+    // Modal Form Control (Task)
     function openModal(editId = null) {
       const modal = document.getElementById('taskModal');
       const form = document.getElementById('taskForm');
@@ -503,6 +603,33 @@
 
     function closeModal() {
       document.getElementById('taskModal').classList.add('hidden');
+    }
+
+    // Modal Form Control (MoM)
+    function openMomModal(editId = null) {
+      const modal = document.getElementById('momModal');
+      const form = document.getElementById('momForm');
+      modal.classList.remove('hidden');
+
+      if (editId) {
+        const m = momList.find(item => item.id === editId);
+        document.getElementById('momModalTitle').innerText = 'Edit Minutes of Meeting';
+        document.getElementById('momId').value = m.id;
+        document.getElementById('momTitle').value = m.title;
+        document.getElementById('momDate').value = m.date;
+        document.getElementById('momAttendees').value = m.attendees || '';
+        document.getElementById('momSummary').value = m.summary;
+        document.getElementById('momActions').value = m.actions || '';
+      } else {
+        document.getElementById('momModalTitle').innerText = 'Catat Minutes of Meeting (MoM)';
+        form.reset();
+        document.getElementById('momId').value = '';
+        document.getElementById('momDate').valueAsDate = new Date();
+      }
+    }
+
+    function closeMomModal() {
+      document.getElementById('momModal').classList.add('hidden');
     }
 
     // Submit Task Handler
@@ -546,11 +673,50 @@
       switchTab('tasks');
     }
 
-    // Delete Task
+    // Submit MoM Handler
+    function handleMomSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('momId').value;
+      const title = document.getElementById('momTitle').value;
+      const date = document.getElementById('momDate').value;
+      const attendees = document.getElementById('momAttendees').value;
+      const summary = document.getElementById('momSummary').value;
+      const actions = document.getElementById('momActions').value;
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+
+      if (id) {
+        const index = momList.findIndex(m => m.id === id);
+        momList[index] = { ...momList[index], title, date, attendees, summary, actions, updatedAt: nowStr };
+      } else {
+        const newMom = {
+          id: 'MOM-' + Date.now(),
+          title,
+          date,
+          attendees,
+          summary,
+          actions,
+          createdAt: nowStr,
+          updatedAt: nowStr
+        };
+        momList.push(newMom);
+      }
+
+      saveMom();
+      closeMomModal();
+    }
+
+    // Delete Operations
     function deleteTask(id) {
       if (confirm('Apakah Anda yakin ingin menghapus pekerjaan ini?')) {
         tasks = tasks.filter(t => t.id !== id);
         saveTasks();
+      }
+    }
+
+    function deleteMom(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus notulensi MoM ini?')) {
+        momList = momList.filter(m => m.id !== id);
+        saveMom();
       }
     }
 
@@ -671,7 +837,7 @@
 
     // Render Visual Charts
     function updateCharts(metSLACount, overdueCount) {
-      // 1. Chart SLA Performance (Met SLA vs Overdue)
+      // 1. Chart SLA Performance
       const slaCtx = document.getElementById('slaChart').getContext('2d');
       if (slaChartInstance) slaChartInstance.destroy();
 
@@ -753,6 +919,76 @@
       });
     }
 
+    // Render MoM Cards Grid
+    function renderMomList() {
+      const grid = document.getElementById('momGrid');
+      const searchVal = document.getElementById('momSearch').value.toLowerCase();
+      grid.innerHTML = '';
+
+      const filteredMom = momList.filter(m => 
+        m.title.toLowerCase().includes(searchVal) ||
+        (m.attendees && m.attendees.toLowerCase().includes(searchVal)) ||
+        m.summary.toLowerCase().includes(searchVal)
+      );
+
+      if (filteredMom.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-white rounded-xl border border-slate-200">
+            <i class="fa-solid fa-note-sticky text-4xl text-slate-300 mb-3 block"></i>
+            <p class="text-slate-500 font-medium">Belum ada catatan Minutes of Meeting (MoM).</p>
+            <p class="text-xs text-slate-400 mt-1">Klik tombol "Buat Notulensi Baru" untuk menambahkan catatan diskusi.</p>
+          </div>
+        `;
+        return;
+      }
+
+      [...filteredMom].reverse().forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition';
+        
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-3">
+              <span class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                <i class="fa-solid fa-calendar-day"></i> ${m.date}
+              </span>
+              <div class="flex items-center gap-1">
+                <button onclick="openMomModal('${m.id}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Notulensi">
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </button>
+                <button onclick="deleteMom('${m.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="Hapus Notulensi">
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <h3 class="font-bold text-slate-800 text-base mb-1.5 leading-snug">${m.title}</h3>
+            ${m.attendees ? `<p class="text-xs text-slate-500 mb-3 flex items-center gap-1"><i class="fa-solid fa-users text-indigo-500"></i> ${m.attendees}</p>` : ''}
+
+            <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
+              <div>
+                <p class="font-semibold text-slate-700 mb-1">Hasil Diskusi:</p>
+                <p class="text-slate-600 whitespace-pre-line leading-relaxed">${m.summary}</p>
+              </div>
+              
+              ${m.actions ? `
+                <div class="bg-amber-50/80 border border-amber-200/60 p-2.5 rounded-lg">
+                  <p class="font-semibold text-amber-900 mb-1 flex items-center gap-1"><i class="fa-solid fa-list-check text-amber-600"></i> Action Items:</p>
+                  <p class="text-amber-800 whitespace-pre-line leading-relaxed">${m.actions}</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3 mt-4 flex justify-between items-center text-[10px] text-slate-400">
+            <span>Dibuat: ${m.createdAt || m.date}</span>
+            <span>Diupdate: ${m.updatedAt || m.date}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
     // Main App Render
     function renderApp() {
       let metSLA = 0;
@@ -785,6 +1021,7 @@
 
       updateCharts(metSLA, overdueSLA);
       renderCalendar();
+      renderMomList();
 
       // Render Dashboard Preview Table
       const dashTableBody = document.getElementById('dashTableBody');
@@ -964,13 +1201,18 @@
       doc.save(`Work_Report_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 
-    // Backup JSON Data
+    // Backup JSON Data (Mendukung Task & MoM)
     function backupJSON() {
-      if (tasks.length === 0) return alert('Tidak ada data pekerjaan untuk dibackup!');
+      if (tasks.length === 0 && momList.length === 0) return alert('Tidak ada data untuk dibackup!');
 
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+      const backupBundle = {
+        tasks: tasks,
+        mom: momList
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupBundle, null, 2));
       const downloadAnchor = document.createElement('a');
-      const filename = `TaskTracker_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      const filename = `TaskTracker_MoM_Backup_${new Date().toISOString().slice(0,10)}.json`;
 
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", filename);
@@ -987,15 +1229,23 @@
 
       fileReader.onload = function(e) {
         try {
-          const importedTasks = JSON.parse(e.target.result);
-          if (!Array.isArray(importedTasks)) {
+          const importedData = JSON.parse(e.target.result);
+          
+          if (Array.isArray(importedData)) {
+            // Format lama (hanya array tasks)
+            tasks = importedData;
+          } else if (importedData.tasks || importedData.mom) {
+            // Format bundle baru (tasks + mom)
+            tasks = importedData.tasks || [];
+            momList = importedData.mom || [];
+          } else {
             alert('Format file JSON tidak valid!');
             return;
           }
 
-          if (confirm(`Impor ${importedTasks.length} data pekerjaan? Data di browser akan digantikan.`)) {
-            tasks = importedTasks;
+          if (confirm(`Impor data berhasil? Data lokal di browser akan diperbarui.`)) {
             saveTasks();
+            saveMom();
             alert('Restore data berhasil!');
           }
         } catch (error) {
