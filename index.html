@@ -72,16 +72,16 @@
       <div class="flex justify-between items-center">
         <div>
           <h2 class="text-xl font-bold text-slate-800">Executive Summary & Analytics</h2>
-          <p class="text-xs text-slate-500">Ringkasan performa, grafik tren, dan kalender kerja interaktif.</p>
+          <p class="text-xs text-slate-500">Ringkasan performa SLA, grafik tren pekerjaan, dan kalender interaktif.</p>
         </div>
         <button onclick="switchTab('tasks')" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
           Kelola Data Task <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
 
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+      <!-- Summary Cards Status & SLA -->
+      <div class="grid grid-cols-2 md:grid-cols-7 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-500 col-span-2 md:col-span-1">
           <p class="text-xs font-medium text-slate-500">Total Pekerjaan</p>
           <h3 id="dashStatTotal" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
         </div>
@@ -97,9 +97,29 @@
           <p class="text-xs font-medium text-slate-500">Hold</p>
           <h3 id="dashStatHold" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
-          <p class="text-xs font-medium text-slate-500">Not Yet / Pending</p>
-          <h3 id="dashStatNotYet" class="text-2xl font-bold text-rose-600 mt-1">0</h3>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-400">
+          <p class="text-xs font-medium text-slate-500">Not Yet</p>
+          <h3 id="dashStatNotYet" class="text-2xl font-bold text-slate-600 mt-1">0</h3>
+        </div>
+
+        <!-- SLA Performance Summary Cards -->
+        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm border-l-4 border-l-emerald-600 col-span-2 md:col-span-1">
+          <p class="text-xs font-semibold text-emerald-800 flex items-center gap-1">
+            <i class="fa-solid fa-circle-check"></i> Meet SLA
+          </p>
+          <div class="flex items-baseline gap-1 mt-1">
+            <h3 id="dashStatMetSLA" class="text-2xl font-bold text-emerald-700">0</h3>
+            <span id="dashPctMetSLA" class="text-xs font-bold text-emerald-600">(0%)</span>
+          </div>
+        </div>
+        <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm border-l-4 border-l-rose-600 col-span-2 md:col-span-1">
+          <p class="text-xs font-semibold text-rose-800 flex items-center gap-1">
+            <i class="fa-solid fa-circle-exclamation"></i> Overdue / Off SLA
+          </p>
+          <div class="flex items-baseline gap-1 mt-1">
+            <h3 id="dashStatOverdue" class="text-2xl font-bold text-rose-700">0</h3>
+            <span id="dashPctOverdue" class="text-xs font-bold text-rose-600">(0%)</span>
+          </div>
         </div>
       </div>
 
@@ -108,23 +128,33 @@
         
         <!-- Kiri (2 Kolom): Charts Visual -->
         <div class="lg:col-span-2 space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Status Doughnut Chart -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-indigo-500"></i> Persentase Status Job
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Chart 1: SLA Performance Chart (Meet SLA vs Overdue) -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5">
+                <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Performa SLA
               </h3>
-              <div class="relative h-56 w-full flex justify-center items-center">
+              <div class="relative h-48 w-full flex justify-center items-center">
+                <canvas id="slaChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart 2: Status Doughnut Chart -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-pie text-indigo-500"></i> Distribusi Status Job
+              </h3>
+              <div class="relative h-48 w-full flex justify-center items-center">
                 <canvas id="statusChart"></canvas>
               </div>
             </div>
 
-            <!-- Monthly Trend Bar Chart -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <h3 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-column text-indigo-500"></i> Tren Volume per Bulan
+            <!-- Chart 3: Monthly Trend Bar Chart -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-column text-indigo-500"></i> Volume per Bulan
               </h3>
-              <div class="relative h-56 w-full flex justify-center items-center">
+              <div class="relative h-48 w-full flex justify-center items-center">
                 <canvas id="trendChart"></canvas>
               </div>
             </div>
@@ -324,7 +354,7 @@
           </div>
         </div>
 
-        <!-- Input Tanggal Close (Muncul / Opsional) -->
+        <!-- Input Tanggal Close (Manual) -->
         <div id="closeDateContainer" class="bg-indigo-50/60 p-3 rounded-lg border border-indigo-100">
           <label class="block text-xs font-semibold text-indigo-900 mb-1">Tanggal Selesai / Close (Manual)</label>
           <input type="date" id="closeDate" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
@@ -349,6 +379,7 @@
     // Global State
     let tasks = JSON.parse(localStorage.getItem('tasks_db')) || [];
     let activeTab = 'dashboard';
+    let slaChartInstance = null;
     let statusChartInstance = null;
     let trendChartInstance = null;
     let calCurrentDate = new Date();
@@ -486,7 +517,6 @@
       let closeDate = document.getElementById('closeDate').value;
       const notes = document.getElementById('taskNotes').value;
 
-      // Jika status Done tapi closeDate kosong, otomatis set hari ini
       if (status === 'Done' && !closeDate) {
         closeDate = new Date().toISOString().slice(0, 10);
       } else if (status !== 'Done' && !closeDate) {
@@ -524,13 +554,12 @@
       }
     }
 
-    // PERBAIKAN LOGIKA SLA DENGAN TANGGAL CLOSE MANUAL:
+    // Logic SLA Evaluation Helper
     function getSLAInfo(startDateStr, slaDays, status, closeDateStr) {
       const start = new Date(startDateStr);
       const targetDate = new Date(start);
       targetDate.setDate(targetDate.getDate() + slaDays);
 
-      // Jika status Done, hitung selisih berdasarkan Tanggal Close
       if (status === 'Done') {
         const completionDate = closeDateStr ? new Date(closeDateStr) : new Date();
         completionDate.setHours(0, 0, 0, 0);
@@ -540,13 +569,12 @@
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays >= 0) {
-          return { label: 'Met SLA', color: 'bg-emerald-100 text-emerald-800 font-medium' };
+          return { isMet: true, label: 'Met SLA', color: 'bg-emerald-100 text-emerald-800 font-medium' };
         } else {
-          return { label: `Off SLA (${Math.abs(diffDays)} hr)`, color: 'bg-rose-100 text-rose-800 font-semibold' };
+          return { isMet: false, label: `Off SLA (${Math.abs(diffDays)} hr)`, color: 'bg-rose-100 text-rose-800 font-semibold' };
         }
       }
 
-      // Jika belum selesai, hitung dari Hari Ini (Today)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -554,11 +582,11 @@
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays < 0) {
-        return { label: `Overdue (${Math.abs(diffDays)} hr)`, color: 'bg-rose-100 text-rose-800 font-semibold' };
+        return { isMet: false, label: `Overdue (${Math.abs(diffDays)} hr)`, color: 'bg-rose-100 text-rose-800 font-semibold' };
       } else if (diffDays <= 1) {
-        return { label: `Hampir SLA (${diffDays} hr)`, color: 'bg-amber-100 text-amber-800 font-medium' };
+        return { isMet: true, label: `Hampir SLA (${diffDays} hr)`, color: 'bg-amber-100 text-amber-800 font-medium' };
       } else {
-        return { label: `On Track (${diffDays} hr)`, color: 'bg-blue-100 text-blue-800 font-medium' };
+        return { isMet: true, label: `On Track (${diffDays} hr)`, color: 'bg-blue-100 text-blue-800 font-medium' };
       }
     }
 
@@ -641,8 +669,31 @@
       }
     }
 
-    // Render Charts Visualization
-    function updateCharts() {
+    // Render Visual Charts
+    function updateCharts(metSLACount, overdueCount) {
+      // 1. Chart SLA Performance (Met SLA vs Overdue)
+      const slaCtx = document.getElementById('slaChart').getContext('2d');
+      if (slaChartInstance) slaChartInstance.destroy();
+
+      slaChartInstance = new Chart(slaCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Met SLA', 'Overdue / Off SLA'],
+          datasets: [{
+            data: [metSLACount, overdueCount],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+        }
+      });
+
+      // 2. Chart Status Job Distribution
       const countDone = tasks.filter(t => t.status === 'Done').length;
       const countInProgress = tasks.filter(t => t.status === 'In Progress').length;
       const countHold = tasks.filter(t => t.status === 'Hold').length;
@@ -657,7 +708,7 @@
           labels: ['Done', 'In Progress', 'Hold', 'Not Yet'],
           datasets: [{
             data: [countDone, countInProgress, countHold, countNotYet],
-            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#f43f5e'],
+            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#94a3b8'],
             borderWidth: 2,
             borderColor: '#ffffff'
           }]
@@ -669,6 +720,7 @@
         }
       });
 
+      // 3. Chart Monthly Volume Trend
       const monthlyGroup = {};
       tasks.forEach(t => {
         const monthKey = t.startDate ? t.startDate.substring(0, 7) : 'Unknown';
@@ -703,14 +755,35 @@
 
     // Main App Render
     function renderApp() {
-      // Update Dashboard Counters
-      document.getElementById('dashStatTotal').innerText = tasks.length;
+      let metSLA = 0;
+      let overdueSLA = 0;
+
+      tasks.forEach(t => {
+        const sla = getSLAInfo(t.startDate, t.slaDays, t.status, t.closeDate);
+        if (sla.isMet) {
+          metSLA++;
+        } else {
+          overdueSLA++;
+        }
+      });
+
+      const totalTasks = tasks.length;
+      const pctMet = totalTasks > 0 ? ((metSLA / totalTasks) * 100).toFixed(1) : 0;
+      const pctOverdue = totalTasks > 0 ? ((overdueSLA / totalTasks) * 100).toFixed(1) : 0;
+
+      // Update Dashboard Indicators & SLA Counters
+      document.getElementById('dashStatTotal').innerText = totalTasks;
       document.getElementById('dashStatDone').innerText = tasks.filter(t => t.status === 'Done').length;
       document.getElementById('dashStatInProgress').innerText = tasks.filter(t => t.status === 'In Progress').length;
       document.getElementById('dashStatHold').innerText = tasks.filter(t => t.status === 'Hold').length;
       document.getElementById('dashStatNotYet').innerText = tasks.filter(t => t.status === 'Not Yet').length;
 
-      updateCharts();
+      document.getElementById('dashStatMetSLA').innerText = metSLA;
+      document.getElementById('dashPctMetSLA').innerText = `(${pctMet}%)`;
+      document.getElementById('dashStatOverdue').innerText = overdueSLA;
+      document.getElementById('dashPctOverdue').innerText = `(${pctOverdue}%)`;
+
+      updateCharts(metSLA, overdueSLA);
       renderCalendar();
 
       // Render Dashboard Preview Table
@@ -824,16 +897,20 @@
     function exportToExcel() {
       if (tasks.length === 0) return alert('Tidak ada data untuk diexport!');
       
-      const exportData = tasks.map((t, index) => ({
-        'No': index + 1,
-        'Nama Pekerjaan': t.title,
-        'Kategori': t.category,
-        'Tanggal Mulai': t.startDate,
-        'Tanggal Close': t.closeDate || '-',
-        'Target SLA (Hari)': t.slaDays,
-        'Status Pekerjaan': t.status,
-        'Catatan': t.notes || '-'
-      }));
+      const exportData = tasks.map((t, index) => {
+        const sla = getSLAInfo(t.startDate, t.slaDays, t.status, t.closeDate);
+        return {
+          'No': index + 1,
+          'Nama Pekerjaan': t.title,
+          'Kategori': t.category,
+          'Tanggal Mulai': t.startDate,
+          'Tanggal Close': t.closeDate || '-',
+          'Target SLA (Hari)': t.slaDays,
+          'Status SLA': sla.label,
+          'Status Pekerjaan': t.status,
+          'Catatan': t.notes || '-'
+        };
+      });
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
@@ -854,29 +931,33 @@
       doc.setFontSize(9);
       doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 21);
 
-      const tableRows = tasks.map((t, idx) => [
-        idx + 1,
-        t.title,
-        t.category,
-        t.startDate,
-        t.closeDate || '-',
-        `${t.slaDays} Hari`,
-        t.status
-      ]);
+      const tableRows = tasks.map((t, idx) => {
+        const sla = getSLAInfo(t.startDate, t.slaDays, t.status, t.closeDate);
+        return [
+          idx + 1,
+          t.title,
+          t.category,
+          t.startDate,
+          t.closeDate || '-',
+          `${t.slaDays} Hari`,
+          sla.label,
+          t.status
+        ];
+      });
 
       doc.autoTable({
-        head: [['No', 'Pekerjaan', 'Kategori', 'Tgl Mulai', 'Tgl Close', 'SLA', 'Status']],
+        head: [['No', 'Pekerjaan', 'Kategori', 'Tgl Mulai', 'Tgl Close', 'SLA', 'Status SLA', 'Status']],
         body: tableRows,
         startY: 26,
         theme: 'grid',
         headStyles: { 
           fillColor: [67, 56, 202],
-          fontSize: 9,
+          fontSize: 8.5,
           fontStyle: 'bold'
         },
         styles: { 
-          fontSize: 9,
-          cellPadding: 2.5
+          fontSize: 8.5,
+          cellPadding: 2
         }
       });
 
