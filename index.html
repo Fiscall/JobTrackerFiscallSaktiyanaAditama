@@ -24,7 +24,7 @@
     .cal-day-cell.other-month { color: #cbd5e1; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-24">
 
   <!-- Header / Navbar dengan Tab Navigasi -->
   <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
@@ -103,7 +103,7 @@
         </div>
       </div>
 
-      <!-- Visual Section: Charts (Kiri) & Interactive Calendar (Kanan) -->
+      <!-- Visual Section: Charts & Calendar -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Kiri (2 Kolom): Charts Visual -->
@@ -131,7 +131,7 @@
           </div>
 
           <!-- Summary Preview Table (Recent Tasks) -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
               <h3 class="font-bold text-slate-800 text-sm">Pekerjaan Terbaru / Aktif</h3>
               <button onclick="switchTab('tasks')" class="text-xs text-indigo-600 hover:underline">Lihat Semua Data Task →</button>
@@ -238,13 +238,13 @@
         </div>
       </div>
 
-      <!-- Task Table Full -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- Task Table Full (Dengan Perbaikan Overflow Dropdown) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm mb-12">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
           <h2 class="font-bold text-slate-800 text-lg">Kelola Data Pekerjaan & SLA</h2>
           <span id="recordCount" class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Record</span>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto min-h-[350px]">
           <table class="w-full text-left text-sm text-slate-600">
             <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-200">
               <tr>
@@ -345,7 +345,7 @@
     let trendChartInstance = null;
     let calCurrentDate = new Date();
 
-    // Hari Libur Indonesia
+    // Hari Libur Indonesia (2025-2027)
     const indonesiaHolidays = {
       "2026-01-01": "Tahun Baru Masehi 2026",
       "2026-01-16": "Isra Mikraj Nabi Muhammad SAW",
@@ -694,7 +694,7 @@
         });
       }
 
-      // Render Tasks Page Table dengan Penomoran (No.)
+      // Render Tasks Page Table dengan Smart Dropdown Positioning
       const filterMonthVal = document.getElementById('filterMonth').value;
       const filterStatusVal = document.getElementById('filterStatus').value;
       const taskTableBody = document.getElementById('taskTableBody');
@@ -713,6 +713,8 @@
         return;
       }
 
+      const totalFiltered = filtered.length;
+
       filtered.forEach((t, index) => {
         const sla = getSLAInfo(t.startDate, t.slaDays, t.status);
 
@@ -723,6 +725,10 @@
           case 'Hold': statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-amber-100 text-amber-700 font-medium">Hold</span>'; break;
           default: statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-700 font-medium">Not Yet</span>';
         }
+
+        // Tentukan posisi dropdown: jika 2 baris paling bawah, tampilkan meluncur ke ATAS
+        const isBottomRow = (index >= totalFiltered - 2);
+        const dropdownPositionClass = isBottomRow ? 'bottom-full mb-1' : 'top-full mt-1';
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
@@ -748,7 +754,7 @@
               </button>
               
               <div id="dropdown-${t.id}" 
-                   class="dropdown-menu hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-slate-100 z-30 py-1 text-left text-xs">
+                   class="dropdown-menu hidden absolute right-0 ${dropdownPositionClass} w-36 bg-white rounded-lg shadow-xl border border-slate-200 z-50 py-1 text-left text-xs">
                 <button onclick="openModal('${t.id}')" 
                         class="w-full px-4 py-2 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 transition">
                   <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Edit
@@ -792,18 +798,16 @@
       XLSX.writeFile(wb, `Work_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // Export to PDF dengan Font 1 Ukuran Lebih Kecil
+    // Export to PDF
     function exportToPDF() {
       if (tasks.length === 0) return alert('Tidak ada data untuk diexport!');
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // Judul Utama (Dikecilkan dari 14pt ke 12pt)
       doc.setFontSize(12);
       doc.text("Laporan Rekapitulasi Pekerjaan & SLA", 14, 15);
       
-      // Subtitle Tanggal
       doc.setFontSize(9);
       doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 21);
 
